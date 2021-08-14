@@ -25,7 +25,7 @@ defmodule Exqdr.Lowlevel do
   @headers %{"Content-Type": "application/json"}
   def get(path, conn) do
     with {:ok, response} <- HTTPoison.get("#{conn}#{path}", @headers, []),
-         IO.inspect(response, label: "get_response_raw"),
+         #IO.inspect(response, label: "get_response_raw"),
          status_code = 200 <- response.status_code,
          {:ok, payload} <- Jason.decode(response.body) do
       {:ok, payload}
@@ -38,9 +38,9 @@ defmodule Exqdr.Lowlevel do
 
   def post(path, data, conn) do
     with {:ok, request} <- Jason.encode(data),
-         IO.inspect(request, label: "encoded_request"),
+         #IO.inspect(request, label: "encoded_request"),
          {:ok, response} <- HTTPoison.post("#{conn}#{path}", request, @headers, []),
-         IO.inspect(response, label: "post_response_raw"),
+         #IO.inspect(response, label: "post_response_raw"),
          200 = response.status_code,
          {:ok, payload} <- Jason.decode(response.body),
          %{"status" => "ok"} = payload do
