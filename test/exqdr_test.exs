@@ -5,6 +5,8 @@ defmodule ExqdrTest do
   @test_server "http://localhost:6333"
   @test_col_1 "test"
   @test_col_2 "testnovec"
+  @num_test_rows 100_000
+  @num_queries 50_000
 
   test "1 qdr responds" do
     {:ok, %{"version" => ver}} = resp = Exqdr.Lowlevel.get("", @test_server)
@@ -74,7 +76,7 @@ defmodule ExqdrTest do
     search3 = %{"vector" => [0.5, 0.5, 0.5, 0.5], "top" => 3}
 
     {:ok, payload} =
-      resp3 =
+      resp2 =
       Exqdr.Collection.rank_and_fetch(search3, @test_col_1, @test_server)
       |> IO.inspect(label: :search3_response)
 
@@ -103,39 +105,55 @@ defmodule ExqdrTest do
   end
 
   defp make_vec(size) do
-    for i <- 0..size do
+    for i <- 0..size-1 do
       uni()
     end
   end
 
+  def format_ticks(t) do
+    div(t, 10000) / 100
+  end
+
   test "5 measure vector insert speed" do
+    
+    stats = %{}
+
     {ticks, data} =
       :timer.tc(fn ->
-        for i <- 0..10_000 do
+        for i <- 0..@num_test_rows-1 do
           v = make_vec(4)
           %{"id" => :os.system_time(:millisecond), "vector" => v}
           #  |> IO.inspect(label: "test vector")
         end
       end)
 
-    IO.inspect({ticks, length(data)}, label: "ROW CREATION TIME !!")
-
     {ticks, resp} =
       :timer.tc(fn ->
         Exqdr.Collection.upsert(data, @test_col_1, @test_server)
       end)
 
-    IO.inspect({ticks, resp}, label: "UPSERT TIME")
-    search3 = %{"vector" => [0.5, 0.5, 0.5, 0.5], "top" => 3}
+    IO.inspect(format_ticks(ticks), label: "nosync upsert time, #{@num_test_rows} rows")
+    IO.inspect(@num_test_rows / format_ticks(ticks), label: "nosync upserts per sec")
+
+    {ticks, resp} =
+      :timer.tc(fn ->
+        Exqdr.Collection.upsert_wait(data, @test_col_1, @test_server)
+      end)
+
+    IO.inspect(format_ticks(ticks), label: "nosync upsert time, #{@num_test_rows} rows")
+    IO.inspect(@num_test_rows / format_ticks(ticks), label: "nosync upserts per sec")
+
+    search_tmpl = %{"vector" => [0.5, 0.5, 0.5, 0.5], "top" => 3}
 
     {ticks, payload} =
       :timer.tc(fn ->
-        for i <- 0..5 do
-          this_search = search3 |> Map.put("vector", make_vec(4))
+        for i <- 0..@num_queries-1 do
+          this_search = search_tmpl |> Map.put("vector", make_vec(4))
           Exqdr.Collection.rank_and_fetch(this_search, @test_col_1, @test_server)
         end
       end)
 
-    IO.inspect({ticks, payload}, label: "QUERY TIME")
+    IO.inspect(format_ticks(ticks), label: "query time (secs), #{@num_queries} queries")
+    IO.inspect(@num_queries / format_ticks(ticks), label: "queries per second")
   end
 end

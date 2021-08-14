@@ -77,7 +77,7 @@ defmodule Exqdr.Collection do
   end
 
   def delete(points, name, conn) when is_list(points) do
-    payload = %{"delete_points" => %{"points" => points}}
+    payload = %{"delete_points" => %{"ids" => points}}
     post("/collections/" <> name, payload, conn)
   end
 
@@ -107,7 +107,7 @@ defmodule Exqdr.Collection do
     fetch!([id], name, conn) |> Map.values() |> Enum.at(0)
   end
 
-  def info(id, name, conn) do
+  def info(name, conn) do
     case get("/collections/#{name}", conn) do
       {:ok, %{"status" => "ok", "result" => res}} ->
         res
