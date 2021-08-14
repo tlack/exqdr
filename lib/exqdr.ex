@@ -64,7 +64,11 @@ defmodule Exqdr.Collection do
     post("/collections", %{"create_collection" => params}, conn)
   end
 
-  def delete(params, conn) do
+  def drop(coll_name, conn) when is_binary(coll_name) do
+    post("/collections", %{"delete_collection" => coll_name}, conn)
+  end
+
+  def drop(params, conn) when is_map(params) do
     post("/collections", %{"delete_collection" => params["name"]}, conn)
   end
 
@@ -137,7 +141,7 @@ defmodule Exqdr.Collection do
   end
 
   def recreate(params, conn) do
-    delete(params, conn)
+    drop(params, conn)
     create(params, conn)
   end
 
