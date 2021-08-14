@@ -76,6 +76,16 @@ defmodule Exqdr.Collection do
     search(%{}, name, conn)
   end
 
+  def delete(points, name, conn) when is_list(points) do
+    payload = %{"delete_points" => %{"points" => points}}
+    post("/collections/" <> name, payload, conn)
+  end
+
+  def delete(point, name, conn) when is_integer(point) do
+    upsert([point], name, conn)
+  end
+
+
   def fetch!(ids, name, conn) when is_list(ids) do
     res =
       post(
