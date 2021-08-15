@@ -26,7 +26,7 @@ defmodule Exqdr.Lowlevel do
   def get(path, conn) do
     with {:ok, response} <- HTTPoison.get("#{conn}#{path}", @headers, []),
          # IO.inspect(response, label: "get_response_raw"),
-         status_code = 200 <- response.status_code,
+         _status_code = 200 <- response.status_code,
          {:ok, payload} <- Jason.decode(response.body) do
       {:ok, payload}
       |> IO.inspect(label: "get: #{path}")
@@ -50,10 +50,6 @@ defmodule Exqdr.Lowlevel do
       error ->
         {:error, error}
     end
-  end
-
-  def flatten_result(%{"id" => id, "payload" => payload, "vector" => vector} = result) do
-    Map.merge(%{"id" => id, "vector" => vector}, payload)
   end
 end
 
@@ -103,7 +99,7 @@ defmodule Exqdr.Collection do
   end
 
   def fetch!(id, name, conn) do
-    fetch!([id], name, conn) |> Map.values() |> Enum.at(0)
+    fetch!([id], name, conn) |> Enum.at(0)
   end
 
   def info(name, conn) do
@@ -126,24 +122,19 @@ defmodule Exqdr.Collection do
     # |> IO.inspect(label: "rank_and_fetch_first_result")
     case resp do
       {:ok, res} ->
-        matches = Enum.map(res["result"], &{&1["id"], &1["score"]})
 
-        {ids, _scores} = Enum.unzip(matches)
+        scores_by_id = Enum.map(res["result"], &{&1["id"], &1["score"]}) |> Enum.into(%{})
 
-        rows = fetch!(ids, name, conn)
+        rows = fetch!(Map.keys(scores_by_id), name, conn) 
+          |> Enum.map(fn x ->
 
-        # IO.inspect(rows, label: "got_fetch_response")
+            id = x["id"]
+            score = scores_by_id[id]
 
-        new_rows =
-          Enum.map(
-            matches,
-            fn {id, score} ->
-              Map.get(rows, id)
-              |> Map.put("score", score)
-            end
-          )
+            Map.put(x, "score", score)
+          end)
 
-        {:ok, new_rows}
+        {:ok, rows}
 
       _ ->
         resp
@@ -200,9 +191,6 @@ defmodule Exqdr.Collection do
   end
 
   defp reform_results(results) do
-    Enum.map(results, fn r ->
-      {r["id"], reform_item(r)}
-    end)
-    |> Enum.into(%{})
+    Enum.map(results, &reform_item/1)
   end
 end
