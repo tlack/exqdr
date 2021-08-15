@@ -82,7 +82,7 @@ defmodule Exqdr.Collection do
   end
 
   def delete(point, name, conn) when is_integer(point) do
-    upsert([point], name, conn)
+    delete([point], name, conn)
   end
 
 
@@ -143,7 +143,7 @@ defmodule Exqdr.Collection do
             end
           )
 
-        {:ok, %{"status" => "ok", "result" => new_rows}}
+        {:ok, new_rows}
 
       _ ->
         resp
@@ -156,7 +156,7 @@ defmodule Exqdr.Collection do
   end
 
   def search(filter, name, conn) do
-    payload = %{"limit" => 1000, "offset" => 0, "filter" => %{}}
+    payload = %{"limit" => 1000, "offset" => 0, "filter" => filter}
     case post("/collections/#{name}/points/scroll", payload, conn) do
 
       {:ok, %{"result" => %{"points" => points}}} ->

@@ -5,8 +5,8 @@ defmodule ExqdrTest do
   @test_server "http://localhost:6333"
   @test_col_1 "test"
   @test_col_2 "testnovec"
-  @num_test_rows 100_000
-  @num_queries 50_000
+  @num_test_rows 1_000
+  @num_queries 1_000
 
   test "1 qdr responds" do
     {:ok, %{"version" => ver}} = resp = Exqdr.Lowlevel.get("", @test_server)
@@ -80,7 +80,7 @@ defmodule ExqdrTest do
       Exqdr.Collection.rank_and_fetch(search3, @test_col_1, @test_server)
       |> IO.inspect(label: :search3_response)
 
-    result = Map.get(payload, "result")
+    payload
   end
 
   test "4 collections without vectors" do
