@@ -99,7 +99,10 @@ defmodule Exqdr.Collection do
   end
 
   def fetch!(id, name, conn) do
-    fetch!([id], name, conn) |> Enum.at(0)
+    case fetch!([id], name, conn) do
+      [] -> nil
+      list -> Enum.at(list, 0)
+    end
   end
 
   def info(name, conn) do

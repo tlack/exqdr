@@ -80,7 +80,11 @@ defmodule ExqdrTest do
       Exqdr.Collection.rank_and_fetch(search3, @test_col_1, @test_server)
       |> IO.inspect(label: :search3_response)
 
-    payload
+
+  end
+
+  test "3.1 nil results from bad ids" do
+    nil = Exqdr.Collection.fetch!(666, @test_col_1, @test_server)
   end
 
   test "4 collections without vectors" do
