@@ -25,7 +25,7 @@ defmodule Exqdr.Lowlevel do
   @headers %{"Content-Type": "application/json"}
   def get(path, conn) do
     with {:ok, response} <- HTTPoison.get("#{conn}#{path}", @headers, []),
-         #IO.inspect(response, label: "get_response_raw"),
+         # IO.inspect(response, label: "get_response_raw"),
          status_code = 200 <- response.status_code,
          {:ok, payload} <- Jason.decode(response.body) do
       {:ok, payload}
@@ -38,9 +38,9 @@ defmodule Exqdr.Lowlevel do
 
   def post(path, data, conn) do
     with {:ok, request} <- Jason.encode(data),
-         #IO.inspect(request, label: "encoded_request"),
+         # IO.inspect(request, label: "encoded_request"),
          {:ok, response} <- HTTPoison.post("#{conn}#{path}", request, @headers, []),
-         #IO.inspect(response, label: "post_response_raw"),
+         # IO.inspect(response, label: "post_response_raw"),
          200 = response.status_code,
          {:ok, payload} <- Jason.decode(response.body),
          %{"status" => "ok"} = payload do
@@ -85,7 +85,6 @@ defmodule Exqdr.Collection do
     delete([point], name, conn)
   end
 
-
   def fetch!(ids, name, conn) when is_list(ids) do
     res =
       post(
@@ -111,6 +110,7 @@ defmodule Exqdr.Collection do
     case get("/collections/#{name}", conn) do
       {:ok, %{"status" => "ok", "result" => res}} ->
         res
+
       _ = e ->
         e
     end
@@ -157,14 +157,13 @@ defmodule Exqdr.Collection do
 
   def search(filter, name, conn) do
     payload = %{"limit" => 1000, "offset" => 0, "filter" => filter}
-    case post("/collections/#{name}/points/scroll", payload, conn) do
 
+    case post("/collections/#{name}/points/scroll", payload, conn) do
       {:ok, %{"result" => %{"points" => points}}} ->
         reform_results(points)
 
       _ = e ->
         e
-
     end
   end
 

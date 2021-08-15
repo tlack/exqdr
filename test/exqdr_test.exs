@@ -105,7 +105,7 @@ defmodule ExqdrTest do
   end
 
   defp make_vec(size) do
-    for i <- 0..size-1 do
+    for i <- 0..(size - 1) do
       uni()
     end
   end
@@ -115,12 +115,11 @@ defmodule ExqdrTest do
   end
 
   test "5 measure vector insert speed" do
-    
     stats = %{}
 
     {ticks, data} =
       :timer.tc(fn ->
-        for i <- 0..@num_test_rows-1 do
+        for i <- 0..(@num_test_rows - 1) do
           v = make_vec(4)
           %{"id" => :os.system_time(:millisecond), "vector" => v}
           #  |> IO.inspect(label: "test vector")
@@ -147,7 +146,7 @@ defmodule ExqdrTest do
 
     {ticks, payload} =
       :timer.tc(fn ->
-        for i <- 0..@num_queries-1 do
+        for i <- 0..(@num_queries - 1) do
           this_search = search_tmpl |> Map.put("vector", make_vec(4))
           Exqdr.Collection.rank_and_fetch(this_search, @test_col_1, @test_server)
         end
