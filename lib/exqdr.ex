@@ -23,6 +23,28 @@ end
 
 defmodule Exqdr.Lowlevel do
   @headers %{"Content-Type": "application/json"}
+
+  defp decode(response) do
+    case Jason.decode(response.body) do
+      {:ok, payload} ->
+        payload
+
+      {:error, why} = error ->
+        error
+    end
+  end
+
+  defp unpack(response) do
+    case response.status_code do
+      200 ->
+        decode(response)
+
+      _ ->
+        {:error, response}
+
+    end
+  end
+
   def get(path, conn) do
     with {:ok, response} <- HTTPoison.get("#{conn}#{path}", @headers, []),
          # IO.inspect(response, label: "get_response_raw"),
@@ -37,18 +59,21 @@ defmodule Exqdr.Lowlevel do
   end
 
   def post(path, data, conn) do
-    with {:ok, request} <- Jason.encode(data),
-         # IO.inspect(request, label: "encoded_request"),
-         {:ok, response} <- HTTPoison.post("#{conn}#{path}", request, @headers, []),
-         # IO.inspect(response, label: "post_response_raw"),
-         200 = response.status_code,
-         {:ok, payload} <- Jason.decode(response.body),
-         %{"status" => "ok"} = payload do
-      {:ok, payload}
-      # |> IO.inspect(label: "post: #{path} / #{Jason.encode!(data)}")
-    else
-      error ->
-        {:error, error}
+    
+    with {:ok, request} <- Jason.encode(data) do
+     case HTTPoison.post("#{conn}#{path}", request, @headers, []) do
+      {:ok, response} ->
+        case unpack(response) do
+          %{"status" => "ok"} = payload -> 
+            {:ok, payload}
+
+          _ = badpayload ->
+            badpayload
+        end
+
+      {:error, _} = error ->
+        error
+      end
     end
   end
 end
@@ -152,7 +177,7 @@ defmodule Exqdr.Collection do
   def search(filter, name, conn) do
     payload = %{"limit" => 1000, "offset" => 0, "filter" => filter}
 
-    case post("/collections/#{name}/points/scroll", payload, conn) do
+    case post("/collections/#{name}/points/scroll", payload, conn) |> IO.inspect(label: :scrollresp) do
       {:ok, %{"result" => %{"points" => points}}} ->
         reform_results(points)
 
@@ -197,3 +222,23 @@ defmodule Exqdr.Collection do
     Enum.map(results, &reform_item/1)
   end
 end
+
+"""
+
+future API:
+
+
+defmodule LP.Repo.SearchSession
+  defstruct id: 0, term: "", when: 0, user: 0
+
+  def server(), do: "http://localhost:6033"
+  def size(), do: 384
+  def collection(), do: "search_session"
+end
+
+{:ok, listings} = Exqdr.Q.all(LP.Repo.SearchSession)
+{:ok, listings} = Exqdr.Q.filter(LP.Repo.SearchSession, %{)
+
+"""
+
+
