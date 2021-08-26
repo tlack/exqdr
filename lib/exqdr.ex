@@ -134,7 +134,7 @@ defmodule Exqdr.Collection do
   def info(name, conn) do
     case get("/collections/#{name}", conn) do
       {:ok, %{"status" => "ok", "result" => res}} ->
-        res
+        {:ok, res}
 
       _ = e ->
         e
