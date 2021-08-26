@@ -51,7 +51,6 @@ defmodule Exqdr.Lowlevel do
          _status_code = 200 <- response.status_code,
          {:ok, payload} <- Jason.decode(response.body) do
       {:ok, payload}
-      |> IO.inspect(label: "get: #{path}")
     else
       error ->
         {:error, error}
