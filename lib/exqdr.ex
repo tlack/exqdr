@@ -79,6 +79,8 @@ defmodule Exqdr.Lowlevel do
 end
 
 defmodule Exqdr.Collection do
+  @scroll_limit 2000
+
   import Exqdr.Lowlevel
 
   def create(params, conn) do
@@ -174,16 +176,24 @@ defmodule Exqdr.Collection do
     create(params, conn)
   end
 
-  def search(filter, name, conn) do
-    payload = %{"limit" => 1000, "offset" => 0, "filter" => filter}
+  def search(filter, offset, name, conn) do
+    payload = %{"limit" => @scroll_limit, "offset" => offset, "filter" => filter}
 
-    case post("/collections/#{name}/points/scroll", payload, conn) |> IO.inspect(label: :scrollresp) do
-      {:ok, %{"result" => %{"points" => points}}} ->
-        reform_results(points)
+    case post("/collections/#{name}/points/scroll", payload, conn) do
+      {:ok, %{"result" => %{"next_page_offset" => new_ofs, "points" => points}}} ->
+
+        case new_ofs do
+          nil -> reform_results(points)
+          _ -> reform_results(points) ++ search(filter, new_ofs, name, conn)
+        end
 
       _ = e ->
         e
     end
+  end
+
+  def search(filter, name, conn) do
+    search(filter, 0, name, conn)
   end
 
   def status(name, conn) do
