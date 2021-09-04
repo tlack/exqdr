@@ -77,7 +77,7 @@ defmodule Exqdr.Lowlevel do
   end
 end
 
-defmodule Exqdr.Collection do
+defmodule Exqdr.Raw do
   @scroll_limit 2000
 
   import Exqdr.Lowlevel

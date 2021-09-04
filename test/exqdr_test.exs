@@ -18,14 +18,14 @@ defmodule ExqdrTest do
 
   test "2 recreate collection" do
     {:ok, _} =
-      Exqdr.Collection.recreate(
+      Exqdr.Raw.recreate(
         %{"name" => @test_col_1, "vector_size" => 4, "distance" => "Dot"},
         @test_server
       )
       |> IO.inspect(label: :create_response)
 
     {:ok, _} =
-      Exqdr.Collection.status(@test_col_1, @test_server)
+      Exqdr.Raw.status(@test_col_1, @test_server)
       |> IO.inspect(label: :status_response)
   end
 
@@ -48,18 +48,18 @@ defmodule ExqdrTest do
     ]
 
     {:ok, _} =
-      Exqdr.Collection.upsert(points, @test_col_1, @test_server)
+      Exqdr.Raw.upsert(points, @test_col_1, @test_server)
       |> IO.inspect(label: :upsert_response)
 
     %{"id" => 1} =
-      Exqdr.Collection.fetch!(1, @test_col_1, @test_server)
+      Exqdr.Raw.fetch!(1, @test_col_1, @test_server)
       |> IO.inspect(label: :fetch_one)
 
     search = %{"vector" => [-0.5, -0.5, -0.5, -0.5], "top" => 3}
 
     {:ok, _} =
       resp1 =
-      Exqdr.Collection.rank(search, @test_col_1, @test_server)
+      Exqdr.Raw.rank(search, @test_col_1, @test_server)
       |> IO.inspect(label: :search1_response)
 
     {:ok, %{"result" => [%{"id" => 1, "score" => 2.0}, %{"id" => 2, "score" => -2.0}]}} == resp1
@@ -68,7 +68,7 @@ defmodule ExqdrTest do
 
     {:ok, _} =
       resp2 =
-      Exqdr.Collection.rank(search2, @test_col_1, @test_server)
+      Exqdr.Raw.rank(search2, @test_col_1, @test_server)
       |> IO.inspect(label: :search2_response)
 
     {:ok, %{"result" => [%{"id" => 2, "score" => 2.0}, %{"id" => 1, "score" => -2.0}]}} == resp2
@@ -77,19 +77,19 @@ defmodule ExqdrTest do
 
     {:ok, payload} =
       resp2 =
-      Exqdr.Collection.rank_and_fetch(search3, @test_col_1, @test_server)
+      Exqdr.Raw.rank_and_fetch(search3, @test_col_1, @test_server)
       |> IO.inspect(label: :search3_response)
 
 
   end
 
   test "3.1 nil results from bad ids" do
-    nil = Exqdr.Collection.fetch!(666, @test_col_1, @test_server)
+    nil = Exqdr.Raw.fetch!(666, @test_col_1, @test_server)
   end
 
   test "4 collections without vectors" do
     {:ok, _} =
-      Exqdr.Collection.recreate(
+      Exqdr.Raw.recreate(
         %{"name" => @test_col_2, "vector_size" => 0, "distance" => "Dot"},
         @test_server
       )
@@ -100,7 +100,7 @@ defmodule ExqdrTest do
     ]
 
     {:ok, _} =
-      Exqdr.Collection.upsert(points2, @test_col_2, @test_server)
+      Exqdr.Raw.upsert(points2, @test_col_2, @test_server)
       |> IO.inspect(label: :upsert_response)
   end
 
@@ -132,7 +132,7 @@ defmodule ExqdrTest do
 
     {ticks, resp} =
       :timer.tc(fn ->
-        Exqdr.Collection.upsert(data, @test_col_1, @test_server)
+        Exqdr.Raw.upsert(data, @test_col_1, @test_server)
       end)
 
     IO.inspect(format_ticks(ticks), label: "nosync upsert time, #{@num_test_rows} rows")
@@ -140,7 +140,7 @@ defmodule ExqdrTest do
 
     {ticks, resp} =
       :timer.tc(fn ->
-        Exqdr.Collection.upsert_wait(data, @test_col_1, @test_server)
+        Exqdr.Raw.upsert_wait(data, @test_col_1, @test_server)
       end)
 
     IO.inspect(format_ticks(ticks), label: "nosync upsert time, #{@num_test_rows} rows")
@@ -152,7 +152,7 @@ defmodule ExqdrTest do
       :timer.tc(fn ->
         for i <- 0..(@num_queries - 1) do
           this_search = search_tmpl |> Map.put("vector", make_vec(4))
-          Exqdr.Collection.rank_and_fetch(this_search, @test_col_1, @test_server)
+          Exqdr.Raw.rank_and_fetch(this_search, @test_col_1, @test_server)
         end
       end)
 
